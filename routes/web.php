@@ -14,3 +14,11 @@
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::group(['prefix' => '/cars'], function() {
+    Route::get('/', 'CarController@index')->name('cars-list');
+    Route::get('/{id}', 'CarController@show')->name('car-show');
+    Route::get('/create', 'CarController@store')->name('car-form');
+    Route::post('/{id}/edit', 'CarController@update')->name('car-edit');
+    Route::post('/', 'CarController@store')->name('car-store');
+});
