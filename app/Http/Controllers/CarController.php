@@ -2,9 +2,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use App\Car;
+use Illuminate\Http\Response;
+use App\Http\Requests\ValidatedCarRequest;
+use App\Entities\Car;
 use App\Repositories\Contracts\CarRepositoryInterface;
+
 
 class CarController extends Controller
 {
@@ -49,15 +51,10 @@ class CarController extends Controller
         return view('cars/create');
     }
 
-    public function store(Request $request)
-    {
-        $newCar = new Car($request->all());
-        return response()->json($this->carsRepository->store($newCar));
-    }
-
     /**
-     * Show items details
+     * Show specified item
      *
+     * @param int $id
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function show(int $id)
@@ -65,7 +62,6 @@ class CarController extends Controller
         $car = $this->carsRepository->getById($id);
 
         if (is_object($car)) {
-            // $response = response()->json($car);
             $response = view('cars/show', ['car' => $car->toArray()]);
         } else {
             $response = view('errors/404');
@@ -74,28 +70,81 @@ class CarController extends Controller
         return $response;
     }
 
-    public function update(Request $request, int $id)
+    /**
+     * edit specified item
+     *
+     * @param int $id
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function edit(int $id)
     {
         $car = $this->carsRepository->getById($id);
 
+        return view('cars/edit', ['car' => $car->toArray()]);
+    }
+
+    /**
+     * Update item values
+     *
+     * @param ValidateCarRequest $request
+     * @param int $id
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+
+    public function update(ValidatedCarRequest $request, int $id)
+    {
+        $requiredFields = $request->only([
+            'model', 'year', 'registration_number', 'color', 'price'
+        ]);
+
+        $car = $this->carsRepository->getById($id);
+
         if (is_object($car)) {
-            $car->fromArray($request->all());
-            $response = response()->json($car);
+            $car->fromArray($requiredFields);
+            $this->carsRepository->update($car);
+
+            $response = view('cars/show', ['car' => $car->toArray()]);
         } else {
-            $response = response()->json(['error' => "No car with id $id"], 404);
+            $response = view('errors/404');
         }
 
         return $response;
     }
 
+    /**
+     * Update item values
+     *
+     * @param ValidateCarRequest $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function store(ValidatedCarRequest $request)
+    {
+        $requiredFields = $request->only([
+            'model', 'year', 'registration_number', 'color', 'price'
+        ]);
+        
+        $newCar = new Car($requiredFields);
+        $this->carsRepository->store($newCar);
+
+        $cars = $this->carsRepository->getAll();
+
+        return view('cars/index', ['cars' => $cars->toArray()]);
+    }
+
+    /**
+     * destroy specified item
+     *
+     * @param int $id
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
     public function destroy(int $id)
     {
         $car = $this->carsRepository->getById($id);
         $collection = $this->carsRepository->delete($id);
         if (is_object($car)) {
-            $response = $collection;
+            $response = view('cars/index', ['cars' => $cars->toArray()]);
         } else {
-            $response = response()->json(['error' => "No car with id $id"], 404);
+            $response = view('errors/404');
         }
 
         return $response;

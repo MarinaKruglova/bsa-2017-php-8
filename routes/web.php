@@ -17,8 +17,11 @@ Route::get('/', function () {
 
 Route::group(['prefix' => '/cars'], function() {
     Route::get('/', 'CarController@index')->name('cars-list');
+    Route::get('/create', 'CarController@create')->name('car-form');
+
     Route::get('/{id}', 'CarController@show')->name('car-show');
-    Route::get('/create', 'CarController@store')->name('car-form');
-    Route::post('/{id}/edit', 'CarController@update')->name('car-edit');
+    Route::get('/{id}/edit', 'CarController@edit')->name('car-edit');
+    Route::post('/{id}', 'CarController@update')->name('car-update');
+
     Route::post('/', 'CarController@store')->name('car-store');
 });
